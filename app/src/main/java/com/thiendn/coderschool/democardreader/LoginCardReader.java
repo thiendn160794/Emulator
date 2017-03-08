@@ -27,6 +27,7 @@ public class LoginCardReader implements NfcAdapter.ReaderCallback {
 
     public interface LoginCallback {
         void onAccountReceived(String account);
+        void onError();
     }
 
     public LoginCardReader(LoginCallback accountCallback) {
@@ -71,6 +72,8 @@ public class LoginCardReader implements NfcAdapter.ReaderCallback {
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Error communicating with card: " + e.toString());
+                mAccountCallback.get().onError();
+
             }
         }
     }
