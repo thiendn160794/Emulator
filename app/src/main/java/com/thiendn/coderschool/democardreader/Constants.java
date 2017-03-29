@@ -5,7 +5,7 @@ package com.thiendn.coderschool.democardreader;
  */
 
 public class Constants {
-//    public static String BASE_URL = "http://192.168.43.207:8080/";
-//    public static String BASE_URL = "https://jwl-api-v0.herokuapp.com/";
-    public static String BASE_URL = "http://192.168.0.101:8080/"; //wifichuane
+//    public static String BASE_URL = "http://192.168.43.191:8080/";
+    public static String BASE_URL = "https://jwl-api-v0.herokuapp.com/";
+//    public static String BASE_URL = "http://192.168.43.207:8080/"; //wifichuane
 }

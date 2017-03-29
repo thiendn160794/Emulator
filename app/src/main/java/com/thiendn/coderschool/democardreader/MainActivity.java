@@ -5,15 +5,13 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.nfc.NfcAdapter;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.zxing.Result;
@@ -27,13 +25,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.net.URL;
-import java.sql.Date;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
 
 import me.dm7.barcodescanner.zxing.ZXingScannerView;
 
@@ -46,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
     public LoginCardReader mLoginCardReader;
     public static int READER_FLAGS =
             NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK;
+    private String saveUrl = "URL";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,12 +67,20 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
         return super.onOptionsItemSelected(item);
     }
 
+    private void setmURL(String url){
+        mURL = url;
+    }
+
     private void showSetting() {
         android.app.FragmentManager fm = getFragmentManager();
         SettingDialog settingDialog = newInstance(MainActivity.this, new Listener() {
             @Override
             public void onSaveButtonClick(String url) {
-                mURL = url;
+                setmURL(url);
+//                mURL = url;
+                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit();
+                editor.putString(saveUrl, url);
+                editor.apply();
             }
         });
         settingDialog.show(fm, "Setting");
@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
 
     @Override
     public void onAccountReceived(final String account) {
+        String url = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString(saveUrl, "https://jwl-api-v0.herokuapp.com/");
         System.out.println("da toi day, Main activity Account is " + account);
 //         This callback is run on a background thread, but updates to UI elements must be performed
 //         on the UI thread.
@@ -105,8 +106,8 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
 //        final HttpGet httpget= new HttpGet(mURL + "users/profile?term=" + account +
 //                "&createDate=" + new Date(Calendar.getInstance().getTimeInMillis()) +
 //                "&ticketid=" + Utils.getRandomString());
-        final HttpGet httpget = new HttpGet(Constants.BASE_URL + "users/" + userId + "/checkin" + "?key=" + key);
-        System.out.println("URI " + httpget.getURI());
+        final HttpGet httpget = new HttpGet(url + "users/" + userId + "/checkin" + "?key=" + key);
+        System.out.println("URI: " + httpget.getURI());
 
         final HttpResponse[] response = new HttpResponse[1];
 
@@ -149,6 +150,13 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
     @Override
     public void onError() {
 //        Toast.makeText(MainActivity.this, "Please touch again!", Toast.LENGTH_LONG).show();
+        Thread errorThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this, "TOUCH AGAIN", Toast.LENGTH_SHORT).show();
+            }
+        });
+        errorThread.start();
     }
 
     private void enableReaderMode() {
@@ -164,6 +172,7 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
 
     @Override
     public void handleResult(Result rawResult) {
+        String url = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString(saveUrl, "https://jwl-api-v0.herokuapp.com/");
         Log.e("handler", rawResult.getText()); // Prints scan results
         Log.e("handler", rawResult.getBarcodeFormat().toString()); // Prints the scan format (qrcode)
         String userId = "";
@@ -176,11 +185,9 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
             e.printStackTrace();
         }
             final HttpClient httpclient = new DefaultHttpClient();
-//        final HttpGet httpget= new HttpGet(Constants.BASE_URL + "users/profile?term=" + userId +
-//                "&createDate=" + createDate + "&ticketid=" + Utils.getRandomString());
-            final HttpGet httpget = new HttpGet(Constants.BASE_URL + "users/" + userId + "/checkin" + "?key=" + key);
+            final HttpGet httpget = new HttpGet(url + "users/" + userId + "/checkin" + "?key=" + key);
             final HttpResponse[] response = new HttpResponse[1];
-
+            System.out.println("URI " + httpget.getURI());
             Thread executeThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
