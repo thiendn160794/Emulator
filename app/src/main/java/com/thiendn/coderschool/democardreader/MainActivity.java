@@ -3,6 +3,9 @@ package com.thiendn.coderschool.democardreader;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.ToneGenerator;
 import android.nfc.NfcAdapter;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -127,8 +130,40 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
                                 public void run()
                                 {
                                     try {
-//                                        tvHelloWorld.setText(jsonObject.getString("data"));
-                                        Toast.makeText(getBaseContext(), jsonObject.getString("data"), Toast.LENGTH_LONG).show();
+                                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                        boolean isSuccess = jsonObject.getBoolean("succeed");
+                                        builder.setTitle("Scan Result");
+                                        builder.setMessage(jsonObject.getString("data"));
+                                        System.out.println("isSuccess " + isSuccess);
+                                        System.out.println("isSuccess " + isSuccess);
+                                        if (!isSuccess){
+                                            ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+                                            toneG.startTone(ToneGenerator.TONE_SUP_ERROR, 1000);
+                                        }else {
+                                            ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+                                            toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 1000);
+
+                                        }
+
+                                        final AlertDialog alert1 = builder.create();
+                                        alert1.show();
+                                        //mScannerView.stopCamera();
+                                        final Handler handler = new Handler();
+                                        final Runnable runnable = new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                if (alert1.isShowing()) {
+                                                    alert1.dismiss();
+                                                }
+                                            }
+                                        };
+                                        alert1.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                                            @Override
+                                            public void onDismiss(DialogInterface dialogInterface) {
+                                                handler.removeCallbacks(runnable);
+                                            }
+                                        });
+                                        handler.postDelayed(runnable, 3000);
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     }
@@ -150,13 +185,15 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
     @Override
     public void onError() {
 //        Toast.makeText(MainActivity.this, "Please touch again!", Toast.LENGTH_LONG).show();
-        Thread errorThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(MainActivity.this, "TOUCH AGAIN", Toast.LENGTH_SHORT).show();
-            }
-        });
-        errorThread.start();
+//        Thread errorThread = new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                Toast.makeText(MainActivity.this, "TOUCH AGAIN", Toast.LENGTH_SHORT).show();
+//            }
+//        });
+//        errorThread.start();
+        ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+        toneG.startTone(ToneGenerator.TONE_SUP_ERROR, 3000);
     }
 
     private void enableReaderMode() {
@@ -204,6 +241,17 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
                                             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                                             builder.setTitle("Scan Result");
                                             builder.setMessage(jsonObject.getString("data"));
+                                            boolean isSuccess = jsonObject.getBoolean("succeed");
+                                            System.out.println("isSuccess " + isSuccess);
+                                            if (!isSuccess){
+                                                ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+                                                toneG.startTone(ToneGenerator.TONE_SUP_ERROR, 3000);
+                                            }else {
+                                                ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+                                                toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 1000);
+
+                                            }
+
                                             final AlertDialog alert1 = builder.create();
                                             alert1.show();
                                             //mScannerView.stopCamera();
