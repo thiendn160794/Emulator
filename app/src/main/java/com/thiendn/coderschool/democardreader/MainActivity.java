@@ -105,11 +105,15 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
 //         on the UI thread.
         String userId = "";
         String key = "";
-        new CheckOnline().execute();
+        new CheckOnlineNFC().execute();
         try {
             JSONObject jsonObject = new JSONObject(account);
             userId = jsonObject.getString("userId");
             key = jsonObject.getString("key");
+            if (userId == null || userId.equals("") || key == null || key.equals("")){
+                Toast.makeText(getBaseContext(), "Can not resolve " + url, Toast.LENGTH_SHORT).show();
+                return;
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -230,8 +234,16 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
             JSONObject jsonObject = new JSONObject(rawResult.getText());
             userId = jsonObject.getString("userId");
             key = jsonObject.getString("key");
+            if (userId == null || userId.equals("") || key == null || key.equals("")){
+                Toast.makeText(getBaseContext(), "Can not resolve " + url, Toast.LENGTH_SHORT).show();
+                mScannerView.resumeCameraPreview(MainActivity.this);
+                return;
+            }
         } catch (JSONException e) {
             e.printStackTrace();
+            Toast.makeText(getBaseContext(), "Can not resolve " + url, Toast.LENGTH_SHORT).show();
+            mScannerView.resumeCameraPreview(MainActivity.this);
+            return;
         }
             final HttpClient httpclient = new DefaultHttpClient();
             final HttpGet httpget = new HttpGet(url + "users/" + userId + "/checkin" + "?key=" + key);
