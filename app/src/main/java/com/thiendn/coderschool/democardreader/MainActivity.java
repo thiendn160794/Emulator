@@ -3,10 +3,12 @@ package com.thiendn.coderschool.democardreader;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.ToneGenerator;
 import android.nfc.NfcAdapter;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -15,9 +17,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.zxing.Result;
+import com.google.zxing.WriterException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -28,10 +32,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 
 import me.dm7.barcodescanner.zxing.ZXingScannerView;
 
 import static com.thiendn.coderschool.democardreader.SettingDialog.*;
+import static java.security.AccessController.getContext;
 
 
 public class MainActivity extends AppCompatActivity implements LoginCardReader.LoginCallback, ZXingScannerView.ResultHandler{
@@ -97,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
 //         on the UI thread.
         String userId = "";
         String key = "";
+        new CheckOnline().execute();
         try {
             JSONObject jsonObject = new JSONObject(account);
             userId = jsonObject.getString("userId");
@@ -104,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
         final HttpClient httpclient = new DefaultHttpClient();
 //        final HttpGet httpget= new HttpGet("https://jwl-api-v0.herokuapp.com/users/profile?term=" + account +
 //        final HttpGet httpget= new HttpGet(mURL + "users/profile?term=" + account +
@@ -209,7 +219,9 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
 
     @Override
     public void handleResult(Result rawResult) {
+
         String url = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString(saveUrl, "https://jwl-api-v0.herokuapp.com/");
+        new CheckOnline().execute();
         Log.e("handler", rawResult.getText()); // Prints scan results
         Log.e("handler", rawResult.getBarcodeFormat().toString()); // Prints the scan format (qrcode)
         String userId = "";
@@ -299,6 +311,88 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
     @Override
     protected void onResume() {
         super.onResume();
-        mScannerView.startCamera();
+    }
+
+    private class CheckOnline extends AsyncTask<Boolean, Void, Boolean >{
+        @Override
+        protected Boolean doInBackground(Boolean... params) {
+            String url = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString(saveUrl, "https://jwl-api-v0.herokuapp.com/");
+            String newUrl = url.substring(7);
+            int end = 0;
+            for (int i = 0; i < newUrl.length(); i++){
+                if (newUrl.charAt(i) == ':') {
+                    end = i;
+                }
+            }
+            newUrl = newUrl.substring(0, end);
+            System.out.println("newUrl " + newUrl);
+            try {
+                int timeoutMs = 3000;
+                Socket sock = new Socket();
+                SocketAddress sockaddr = null;
+                try {
+                    sockaddr = new InetSocketAddress(newUrl, 8080);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                sock.connect(sockaddr, timeoutMs);
+                sock.close();
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            super.onPostExecute(aBoolean);
+            if (!aBoolean){
+                String url = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString(saveUrl, "https://jwl-api-v0.herokuapp.com/");
+                Toast.makeText(getBaseContext(), "Can not resolve " + url, Toast.LENGTH_SHORT).show();
+                mScannerView.resumeCameraPreview(MainActivity.this);
+                return;
+            }
+        }
+    }
+
+    private class CheckOnlineNFC extends AsyncTask<Boolean, Void, Boolean >{
+        @Override
+        protected Boolean doInBackground(Boolean... params) {
+            String url = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString(saveUrl, "https://jwl-api-v0.herokuapp.com/");
+            String newUrl = url.substring(7);
+            int end = 0;
+            for (int i = 0; i < newUrl.length(); i++){
+                if (newUrl.charAt(i) == ':') {
+                    end = i;
+                }
+            }
+            newUrl = newUrl.substring(0, end);
+            System.out.println("newUrl " + newUrl);
+            try {
+                int timeoutMs = 3000;
+                Socket sock = new Socket();
+                SocketAddress sockaddr = null;
+                try {
+                    sockaddr = new InetSocketAddress(newUrl, 8080);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                sock.connect(sockaddr, timeoutMs);
+                sock.close();
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            super.onPostExecute(aBoolean);
+            if (!aBoolean){
+                String url = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString(saveUrl, "https://jwl-api-v0.herokuapp.com/");
+                Toast.makeText(getBaseContext(), "Can not resolve " + url, Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
     }
 }
