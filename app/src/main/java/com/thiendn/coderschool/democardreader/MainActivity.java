@@ -112,10 +112,14 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
             key = jsonObject.getString("key");
             if (userId == null || userId.equals("") || key == null || key.equals("")){
                 Toast.makeText(getBaseContext(), "Can not resolve " + url, Toast.LENGTH_SHORT).show();
+//                mScannerView.resumeCameraPreview(MainActivity.this);
                 return;
             }
         } catch (JSONException e) {
             e.printStackTrace();
+            Toast.makeText(getBaseContext(), "Wrong format key", Toast.LENGTH_SHORT).show();
+//            mScannerView.resumeCameraPreview(MainActivity.this);
+            return;
         }
 
         final HttpClient httpclient = new DefaultHttpClient();
@@ -241,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements LoginCardReader.L
             }
         } catch (JSONException e) {
             e.printStackTrace();
-            Toast.makeText(getBaseContext(), "Can not resolve " + url, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getBaseContext(), "Wrong format key", Toast.LENGTH_SHORT).show();
             mScannerView.resumeCameraPreview(MainActivity.this);
             return;
         }
